@@ -76,45 +76,70 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/batch?batchId=xxx - Get transaction status
+// GET /api/batch?userAddress=xxx - Get user's batches  
 export async function GET(request: NextRequest) {
   await initDB();
   
   try {
     const { searchParams } = new URL(request.url);
     const batchId = searchParams.get('batchId');
+    const userAddress = searchParams.get('userAddress');
 
-    if (!batchId) {
+    const batchingService = new BatchingService();
+
+    if (batchId) {
+      // Get specific transaction status
+      const transaction = await batchingService.getTransactionStatus(batchId);
+
+      if (!transaction) {
+        return NextResponse.json(
+          { error: 'Transaction not found' },
+          { status: 404 }
+        );
+      }
+
+      // Convert BigInt to string for JSON serialization
+      const responseTransaction = {
+        ...transaction,
+        gasEstimate: transaction.gasEstimate?.toString(),
+      };
+
+      return NextResponse.json({
+        success: true,
+        transaction: responseTransaction,
+      });
+    } else if (userAddress) {
+      // Get user's batches
+      if (!userAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+        return NextResponse.json(
+          { error: 'Invalid user address format' },
+          { status: 400 }
+        );
+      }
+
+      const batches = await batchingService.getUserBatches(userAddress);
+      
+      // Convert BigInt to string for JSON serialization
+      const responseBatches = batches.map(batch => ({
+        ...batch,
+        gasEstimate: batch.gasEstimate?.toString(),
+      }));
+
+      return NextResponse.json({
+        success: true,
+        batches: responseBatches,
+      });
+    } else {
       return NextResponse.json(
-        { error: 'Missing batchId parameter' },
+        { error: 'Missing batchId or userAddress parameter' },
         { status: 400 }
       );
     }
 
-    const batchingService = new BatchingService();
-    const transaction = await batchingService.getTransactionStatus(batchId);
-
-    if (!transaction) {
-      return NextResponse.json(
-        { error: 'Transaction not found' },
-        { status: 404 }
-      );
-    }
-
-    // Convert BigInt to string for JSON serialization
-    const responseTransaction = {
-      ...transaction,
-      gasEstimate: transaction.gasEstimate?.toString(),
-    };
-
-    return NextResponse.json({
-      success: true,
-      transaction: responseTransaction,
-    });
-
   } catch (error) {
-    console.error('Error fetching transaction status:', error);
+    console.error('Error fetching batch data:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch transaction status' },
+      { error: 'Failed to fetch batch data' },
       { status: 500 }
     );
   }

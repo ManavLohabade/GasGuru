@@ -14,6 +14,7 @@ import {
   Loader2,
   RefreshCw
 } from 'lucide-react';
+import WalletConnection from '../../components/WalletConnection';
 
 interface Analytics {
   totalGasSaved: string;
@@ -43,7 +44,7 @@ export default function AnalyticsPage() {
       setLoading(true);
 
       const [analyticsResponse, networkResponse] = await Promise.all([
-        fetch('/api/analytics?dappId=demo'),
+        fetch('/api/analytics'),
         fetch('/api/shardeum?action=chain-info')
       ]);
 
@@ -133,7 +134,7 @@ export default function AnalyticsPage() {
                 <h1 className="text-2xl font-bold text-gray-900">GasGuru</h1>
               </Link>
             </div>
-            <nav className="flex space-x-6">
+            <nav className="flex items-center space-x-6">
               <Link href="/dashboard" className="text-gray-600 hover:text-indigo-600 font-medium">
                 Dashboard
               </Link>
@@ -143,6 +144,7 @@ export default function AnalyticsPage() {
               <Link href="/analytics" className="text-indigo-600 font-medium">
                 Analytics
               </Link>
+              <WalletConnection showBalance={false} />
             </nav>
           </div>
         </div>

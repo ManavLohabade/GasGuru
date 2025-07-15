@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Zap, 
@@ -14,6 +14,9 @@ import {
   Users,
   DollarSign
 } from 'lucide-react';
+import WalletConnection from '../../components/WalletConnection';
+import BatchTracker from '../../components/BatchTracker';
+import walletService, { WalletState } from '../../lib/wallet-service';
 
 interface BatchTransaction {
   batchId: string;
@@ -40,6 +43,23 @@ export default function BatchPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recentBatch, setRecentBatch] = useState<BatchTransaction | null>(null);
+  const [wallet, setWallet] = useState<WalletState | null>(null);
+
+  const handleWalletConnect = (walletState: WalletState) => {
+    setWallet(walletState);
+    setFormData(prev => ({
+      ...prev,
+      userAddress: walletState.address
+    }));
+  };
+
+  const handleWalletDisconnect = () => {
+    setWallet(null);
+    setFormData(prev => ({
+      ...prev,
+      userAddress: ''
+    }));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -155,7 +175,7 @@ export default function BatchPage() {
                 <h1 className="text-2xl font-bold text-gray-900">GasGuru</h1>
               </Link>
             </div>
-            <nav className="flex space-x-6">
+            <nav className="flex items-center space-x-6">
               <Link href="/dashboard" className="text-gray-600 hover:text-indigo-600 font-medium">
                 Dashboard
               </Link>
@@ -165,6 +185,11 @@ export default function BatchPage() {
               <Link href="/analytics" className="text-gray-600 hover:text-indigo-600 font-medium">
                 Analytics
               </Link>
+              <WalletConnection 
+                onConnect={handleWalletConnect}
+                onDisconnect={handleWalletDisconnect}
+                showBalance={false}
+              />
             </nav>
           </div>
         </div>
@@ -196,9 +221,10 @@ export default function BatchPage() {
                   name="userAddress"
                   value={formData.userAddress}
                   onChange={handleInputChange}
-                  placeholder="0x..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="0x... (Connect wallet to auto-fill)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                   required
+                  disabled={!wallet}
                 />
               </div>
 
@@ -213,7 +239,7 @@ export default function BatchPage() {
                   value={formData.toAddress}
                   onChange={handleInputChange}
                   placeholder="0x..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                   required
                 />
               </div>
@@ -229,7 +255,7 @@ export default function BatchPage() {
                   value={formData.amount}
                   onChange={handleInputChange}
                   placeholder="1000000000000000000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">1 SHM = 1,000,000,000,000,000,000 wei</p>
@@ -246,7 +272,7 @@ export default function BatchPage() {
                   value={formData.tokenAddress}
                   onChange={handleInputChange}
                   placeholder="0x... (leave empty for native SHM)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                 />
               </div>
 
@@ -260,7 +286,7 @@ export default function BatchPage() {
                   name="scheduledFor"
                   value={formData.scheduledFor}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-white"
                 />
                 <p className="text-xs text-gray-500 mt-1">Leave empty for immediate batching</p>
               </div>
@@ -395,6 +421,17 @@ export default function BatchPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Batch Tracker */}
+          <div className="mt-8">
+            <BatchTracker 
+              userAddress={wallet?.address}
+              onExecute={(batchId) => {
+                console.log('Executing batch:', batchId);
+                setSuccess(`Executing batch transaction: ${batchId}`);
+              }}
+            />
           </div>
         </div>
       </main>

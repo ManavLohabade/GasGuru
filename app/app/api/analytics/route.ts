@@ -17,6 +17,7 @@ const initDB = async () => {
 };
 
 // GET /api/analytics?dappId=xxx - Get analytics for a dApp
+// GET /api/analytics - Get global analytics
 export async function GET(request: NextRequest) {
   await initDB();
   
@@ -24,40 +25,45 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const dappId = searchParams.get('dappId');
 
-    if (!dappId) {
-      return NextResponse.json(
-        { error: 'Missing dappId parameter' },
-        { status: 400 }
-      );
-    }
-
     const batchingService = new BatchingService();
-    const analytics = await batchingService.getAnalytics(dappId);
 
-    if (!analytics) {
-      // Return empty analytics if no data found
+    if (dappId) {
+      // Get analytics for specific dApp
+      const analytics = await batchingService.getAnalytics(dappId);
+
+      if (!analytics) {
+        // Return empty analytics if no data found
+        return NextResponse.json({
+          success: true,
+          analytics: {
+            totalGasSaved: '0',
+            totalBatches: 0,
+            totalTransactions: 0,
+            averageBatchSize: 0,
+            lastUpdated: null,
+          },
+        });
+      }
+
+      // Convert BigInt to string for JSON serialization
+      const responseAnalytics = {
+        ...analytics,
+        totalGasSaved: analytics.totalGasSaved.toString(),
+      };
+
       return NextResponse.json({
         success: true,
-        analytics: {
-          totalGasSaved: '0',
-          totalBatches: 0,
-          totalTransactions: 0,
-          averageBatchSize: 0,
-          lastUpdated: null,
-        },
+        analytics: responseAnalytics,
+      });
+    } else {
+      // Get global analytics across all dApps
+      const globalAnalytics = await batchingService.getGlobalAnalytics();
+
+      return NextResponse.json({
+        success: true,
+        analytics: globalAnalytics,
       });
     }
-
-    // Convert BigInt to string for JSON serialization
-    const responseAnalytics = {
-      ...analytics,
-      totalGasSaved: analytics.totalGasSaved.toString(),
-    };
-
-    return NextResponse.json({
-      success: true,
-      analytics: responseAnalytics,
-    });
 
   } catch (error) {
     console.error('Error fetching analytics:', error);
