@@ -14,6 +14,7 @@ import {
   Plus,
   ArrowRight
 } from 'lucide-react';
+import WalletConnection from '../../components/WalletConnection';
 
 interface NetworkHealth {
   nodeCount: number;
@@ -61,7 +62,7 @@ export default function Dashboard() {
       const [networkResponse, gasResponse, analyticsResponse] = await Promise.all([
         fetch('/api/shardeum?action=network-health'),
         fetch('/api/shardeum?action=gas-price'),
-        fetch('/api/analytics?dappId=demo')
+        fetch('/api/analytics')
       ]);
 
       if (networkResponse.ok) {
@@ -122,7 +123,7 @@ export default function Dashboard() {
                 <h1 className="text-2xl font-bold text-gray-900">GasGuru</h1>
               </Link>
             </div>
-            <nav className="flex space-x-6">
+            <nav className="flex items-center space-x-6">
               <Link href="/dashboard" className="text-indigo-600 font-medium">
                 Dashboard
               </Link>
@@ -132,6 +133,7 @@ export default function Dashboard() {
               <Link href="/analytics" className="text-gray-600 hover:text-indigo-600 font-medium">
                 Analytics
               </Link>
+              <WalletConnection showBalance={false} />
             </nav>
           </div>
         </div>

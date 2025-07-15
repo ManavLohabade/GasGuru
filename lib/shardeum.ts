@@ -86,7 +86,7 @@ class ShardeumAPI {
   private baseURL: string;
   private requestId: number = 1;
 
-  constructor(rpcUrl: string = 'https://api.shardeum.org') {
+  constructor(rpcUrl: string = 'https://api-testnet.shardeum.org') {
     this.baseURL = rpcUrl;
   }
 
