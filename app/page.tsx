@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Activity, Zap, Clock, BarChart3, TrendingUp, Shield } from 'lucide-react';
+import WalletConnection from '../components/WalletConnection';
 
 export default function Home() {
   return (
@@ -12,7 +13,7 @@ export default function Home() {
               <Zap className="h-8 w-8 text-indigo-600" />
               <h1 className="text-2xl font-bold text-gray-900">GasGuru</h1>
             </div>
-            <nav className="flex space-x-6">
+            <nav className="flex items-center space-x-6">
               <Link href="/dashboard" className="text-gray-600 hover:text-indigo-600 font-medium">
                 Dashboard
               </Link>
@@ -22,6 +23,7 @@ export default function Home() {
               <Link href="/analytics" className="text-gray-600 hover:text-indigo-600 font-medium">
                 Analytics
               </Link>
+              <WalletConnection showBalance={false} />
             </nav>
           </div>
         </div>
