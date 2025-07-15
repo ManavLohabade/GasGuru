@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ShardeumAPI from '../../../lib/shardeum';
+import ShardeumAPI from '../../lib/shardeum';
 
 // GET /api/shardeum - Get Shardeum network information
 export async function GET(request: NextRequest) {

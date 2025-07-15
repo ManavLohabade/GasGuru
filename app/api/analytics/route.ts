@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import BatchingService from '../../../lib/batching-service';
-import { initializeDatabase } from '../../../lib/database';
+import BatchingService from '../../lib/batching-service';
+import { initializeDatabase } from '../../lib/database';
 
 // Initialize database on first request
 let dbInitialized = false;
