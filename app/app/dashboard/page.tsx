@@ -12,8 +12,7 @@ import {
   CheckCircle,
   Loader2,
   Plus,
-  ArrowRight,
-  ExternalLink
+  ArrowRight
 } from 'lucide-react';
 import WalletConnection from '../../components/WalletConnection';
 
@@ -44,70 +43,16 @@ interface Analytics {
   averageBatchSize: number;
 }
 
-interface BatchItem {
-  id: string;
-  status: 'pending' | 'executing' | 'completed' | 'failed';
-  transactions: Array<{
-    to: string;
-    value: string;
-    data?: string;
-    hash?: string;
-  }>;
-  totalGasSaved?: string;
-  executedAt?: string;
-  createdAt: string;
-}
-
 export default function Dashboard() {
   const [networkHealth, setNetworkHealth] = useState<NetworkHealth | null>(null);
   const [gasOptimization, setGasOptimization] = useState<GasOptimization | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [recentBatches, setRecentBatches] = useState<BatchItem[]>([]);
-  const [userAddress, setUserAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
-
-  useEffect(() => {
-    // Listen for wallet connection changes
-    const handleWalletChange = () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        window.ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
-          if (accounts.length > 0) {
-            setUserAddress(accounts[0]);
-            fetchRecentBatches(accounts[0]);
-          } else {
-            setUserAddress(null);
-            setRecentBatches([]);
-          }
-        });
-      }
-    };
-
-    handleWalletChange();
-    
-    if (typeof window !== 'undefined' && window.ethereum) {
-      window.ethereum.on('accountsChanged', handleWalletChange);
-      return () => {
-        window.ethereum.removeListener('accountsChanged', handleWalletChange);
-      };
-    }
-  }, []);
-
-  const fetchRecentBatches = async (address: string) => {
-    try {
-      const response = await fetch(`/api/batch?userAddress=${address}&limit=5`);
-      if (response.ok) {
-        const data = await response.json();
-        setRecentBatches(data.batches || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch recent batches:', err);
-    }
-  };
 
   const fetchDashboardData = async () => {
     try {
@@ -153,19 +98,6 @@ export default function Dashboard() {
     const wei = BigInt(savedWei);
     const eth = Number(wei) / 1e18;
     return `${eth.toFixed(6)} SHM`;
-  };
-
-  const formatAddress = (address: string): string => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'completed': return 'text-green-600';
-      case 'executing': return 'text-blue-600';
-      case 'failed': return 'text-red-600';
-      default: return 'text-yellow-600';
-    }
   };
 
   if (loading) {
@@ -405,105 +337,36 @@ export default function Dashboard() {
 
         {/* Recent Activity */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-            {userAddress && recentBatches.length > 0 && (
-              <Link href="/batch" className="text-indigo-600 hover:text-indigo-700 font-medium text-sm">
-                View All
-              </Link>
-            )}
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Getting Started</h3>
+          <div className="space-y-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-indigo-600">1</span>
+              </div>
+              <div className="ml-4">
+                <h4 className="font-medium text-gray-900">Create your first batch</h4>
+                <p className="text-sm text-gray-600">Start by adding transactions to the batch queue to optimize gas usage.</p>
+              </div>
+            </div>
+            <div className="flex items-start">
+              <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-indigo-600">2</span>
+              </div>
+              <div className="ml-4">
+                <h4 className="font-medium text-gray-900">Monitor your savings</h4>
+                <p className="text-sm text-gray-600">Track gas savings and performance metrics in the analytics dashboard.</p>
+              </div>
+            </div>
+            <div className="flex items-start">
+              <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-indigo-600">3</span>
+              </div>
+              <div className="ml-4">
+                <h4 className="font-medium text-gray-900">Integrate the SDK</h4>
+                <p className="text-sm text-gray-600">Use our developer SDK to automatically batch transactions in your dApp.</p>
+              </div>
+            </div>
           </div>
-          
-          {!userAddress ? (
-            <div className="text-center py-8">
-              <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">Connect your wallet to see recent activity</p>
-              <div className="max-w-xs mx-auto">
-                <WalletConnection showBalance={false} />
-              </div>
-            </div>
-          ) : recentBatches.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-indigo-600">1</span>
-                  </div>
-                  <div className="ml-4 text-left">
-                    <h4 className="font-medium text-gray-900">Create your first batch</h4>
-                    <p className="text-sm text-gray-600">Start by adding transactions to the batch queue to optimize gas usage.</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-indigo-600">2</span>
-                  </div>
-                  <div className="ml-4 text-left">
-                    <h4 className="font-medium text-gray-900">Monitor your savings</h4>
-                    <p className="text-sm text-gray-600">Track gas savings and performance metrics in the analytics dashboard.</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-indigo-600">3</span>
-                  </div>
-                  <div className="ml-4 text-left">
-                    <h4 className="font-medium text-gray-900">Integrate the SDK</h4>
-                    <p className="text-sm text-gray-600">Use our developer SDK to automatically batch transactions in your dApp.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {recentBatches.map((batch) => (
-                <div key={batch.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-900">
-                        Batch #{batch.id.slice(0, 8)}
-                      </span>
-                      <span className={`text-xs font-medium capitalize ${getStatusColor(batch.status)}`}>
-                        {batch.status}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(batch.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                      {batch.transactions.length} transaction{batch.transactions.length > 1 ? 's' : ''}
-                    </span>
-                    
-                    {batch.status === 'completed' && batch.totalGasSaved && (
-                      <span className="text-green-600 font-medium">
-                        Saved {formatGasSaved(batch.totalGasSaved)}
-                      </span>
-                    )}
-                  </div>
-
-                  {batch.status === 'completed' && batch.transactions.some(tx => tx.hash) && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {batch.transactions.filter(tx => tx.hash).map((tx, index) => (
-                        <a
-                          key={index}
-                          href={`https://explorer-testnet.shardeum.org/transaction/${tx.hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center space-x-1"
-                        >
-                          <span>Tx {index + 1}</span>
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </main>
     </div>
